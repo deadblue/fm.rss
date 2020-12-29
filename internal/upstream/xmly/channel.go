@@ -3,7 +3,6 @@ package xmly
 import (
 	"fmt"
 	"github.com/deadblue/fm.rss/internal/db"
-	"log"
 	"time"
 )
 
@@ -27,7 +26,6 @@ const (
 )
 
 func (f *fetcherImpl) FetchChannel(channelId string, channel *db.Channel) (hasUpdate bool, err error) {
-	log.Printf("Fetching channel [%s/%s] from upstream ...", _Name, channelId)
 	// Fetch album data from upstream
 	url := fmt.Sprintf(urlAlbumData, time.Now().Unix()*1000, channelId)
 	data := &_AlbumData{}
@@ -51,41 +49,13 @@ func (f *fetcherImpl) FetchChannel(channelId string, channel *db.Channel) (hasUp
 		channel.UpdateTime = updateTime
 		channel.FetchTime = now
 		hasUpdate = true
-	} else if channel.UpdateTime != updateTime {
+	} else if channel.UpdateTime.Before(updateTime) {
 		channel.UpdateTime = updateTime
 		channel.FetchTime = now
 		hasUpdate = true
 	}
 	return
 }
-
-//func (f *feederImpl) fillChannel(albumId string, feed *rss.Feed) (isUpdated bool, err error) {
-//	// Retrieve channel data from database
-//	log.Printf("Retrieving channel [%s/%s] from database ...", _SourceName, albumId)
-//	doc, isNew := &db.Channel{}, false
-//	err = f.dc.ChannelGet(_SourceName, albumId, doc)
-//	if err != nil {
-//		if err == mongo.ErrNoDocuments {
-//			err, isNew = nil, true
-//		} else {
-//			return
-//		}
-//	}
-//	if !doc.IsComplete {
-//		if isUpdated, err = f.fetchChannel(albumId, doc); isUpdated {
-//			err = f.dc.ChannelPut(doc, isNew)
-//		}
-//	}
-//	// Fill channel data to feed
-//	if feed != nil {
-//		feed.WithInfo(doc.Link, doc.Title, doc.Intro).
-//			WithAuthor(doc.Author).
-//			WithImage(doc.Cover).
-//			WithComplete(doc.IsComplete).
-//			WithPubDate(doc.UpdateTime)
-//	}
-//	return
-//}
 
 func makeChannelLink(channelId string) string {
 	return fmt.Sprintf("https://www.ximalaya.com/album/%s/", channelId)
