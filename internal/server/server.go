@@ -61,7 +61,7 @@ func (s *Server) shutdown() {
 func (s *Server) Run() {
 	// Handle OS signal
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	// Startup server
 	s.startup()
 	// Waiting for down
@@ -82,6 +82,11 @@ func (s *Server) Run() {
 }
 
 func New(network, address string, app App) (s *Server, err error) {
+	if network == "unix" || network == "unixpacket" {
+		if err = os.Remove(address); err != nil && !os.IsNotExist(err) {
+			return
+		}
+	}
 	// Create network listener
 	l, err := net.Listen(network, address)
 	if err != nil {
